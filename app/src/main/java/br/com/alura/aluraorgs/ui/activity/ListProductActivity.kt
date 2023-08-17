@@ -2,6 +2,7 @@ package br.com.alura.aluraorgs.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import br.com.alura.aluraorgs.dao.ProductsDao
@@ -16,7 +17,13 @@ class ListProductActivity : AppCompatActivity() {
     }
 
     private val adapter by lazy {
-        ListProductAdapter(context = this, products = dao.searchAll())
+        ListProductAdapter(context = this, products = dao.searchAll()){
+            Log.i(this::class.java.toString(), "Clicou no item na activity")
+            val intent = Intent(this, ProductDetailsActivity::class.java).apply {
+                putExtra("product", it)
+            }
+            startActivity(intent)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

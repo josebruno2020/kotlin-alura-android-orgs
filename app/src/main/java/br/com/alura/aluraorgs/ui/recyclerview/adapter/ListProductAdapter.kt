@@ -7,23 +7,37 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import br.com.alura.aluraorgs.databinding.ProductItemBinding
+import br.com.alura.aluraorgs.extensions.formatBrValue
 import br.com.alura.aluraorgs.extensions.tryLoadImage
 import br.com.alura.aluraorgs.model.Product
-import java.text.NumberFormat
-import java.util.Locale
 
 class ListProductAdapter(
     private val context: Context,
-    products: List<Product>
+    products: List<Product>,
+    var onClickItemViewListener: (product: Product) -> Unit = {}
 ) : RecyclerView.Adapter<ListProductAdapter.ViewHolder>() {
 
     private val dataSet = products.toMutableList()
 
-    class ViewHolder(
+    inner class ViewHolder(
         private val binding: ProductItemBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun showItem(product: Product) {
+        private lateinit var product: Product
+
+        init {
+            itemView.setOnClickListener {
+                if (::product.isInitialized) {
+                    onClickItemViewListener(product)
+                }
+            }
+        }
+
+        fun showItem(
+            product: Product,
+        ) {
+            this.product = product
+
             val name = binding.pTitle
             name.text = product.name
 
@@ -31,14 +45,11 @@ class ListProductAdapter(
             desc.text = product.description
 
             val v = binding.value
-            val currencyFormat: NumberFormat = NumberFormat.getCurrencyInstance(Locale("pt", "br"))
-            v.text = currencyFormat.format(product.value)
+            v.text = product.value.formatBrValue()
 
             if (product.image.isNullOrEmpty()) {
                 binding.productImage.visibility = View.GONE
             }
-
-
             binding.productImage.tryLoadImage(product.image)
         }
     }
