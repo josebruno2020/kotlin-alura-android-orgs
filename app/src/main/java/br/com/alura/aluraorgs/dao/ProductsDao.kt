@@ -9,8 +9,10 @@ class ProductsDao {
         products.add(product)
     }
 
-    fun searchAll(): List<Product> {
-        return products.toList()
+    fun searchAll(onComplete: () -> Unit = {}): List<Product> {
+        val products = products.toList()
+        onComplete()
+        return products
     }
 
     companion object {
