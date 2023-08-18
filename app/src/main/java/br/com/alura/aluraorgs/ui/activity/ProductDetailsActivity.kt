@@ -1,7 +1,6 @@
 package br.com.alura.aluraorgs.ui.activity
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import br.com.alura.aluraorgs.databinding.ActivityProductDetailsBinding
 import br.com.alura.aluraorgs.extensions.formatBrValue
@@ -17,19 +16,9 @@ class ProductDetailsActivity : AppCompatActivity() {
         setContentView(binding.root)
         supportActionBar?.hide()
 
-
-        val extrasData = intent.extras
-
-
-        val product = extrasData?.getParcelable<Product>("product")
-        Log.i("ProductDetails", "onCreate: $product")
-
-        if (product == null) {
-            finish()
-        }
-
-
-        setViewData(product as Product)
+        intent.getParcelableExtra<Product>("product")?.let {
+            setViewData(product = it)
+        } ?: finish()
     }
 
     private fun setViewData(product: Product) {
