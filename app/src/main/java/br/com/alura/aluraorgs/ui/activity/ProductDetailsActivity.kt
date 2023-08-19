@@ -1,11 +1,9 @@
 package br.com.alura.aluraorgs.ui.activity
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import br.com.alura.aluraorgs.R
 import br.com.alura.aluraorgs.database.ProductDatabase
@@ -13,7 +11,7 @@ import br.com.alura.aluraorgs.databinding.ActivityProductDetailsBinding
 import br.com.alura.aluraorgs.extensions.formatBrValue
 import br.com.alura.aluraorgs.extensions.tryLoadImage
 import br.com.alura.aluraorgs.model.Product
-import br.com.alura.aluraorgs.ui.dialog.ConfirmDialog
+import br.com.alura.aluraorgs.ui.menu.ProdutMenuActions
 
 class ProductDetailsActivity : AppCompatActivity() {
     private val binding by lazy {
@@ -24,20 +22,18 @@ class ProductDetailsActivity : AppCompatActivity() {
         ProductDatabase.instance(this).productDao()
     }
 
-    private lateinit var product: Product
+    private var idProduct: Long = 0L
+
+    private var product: Product? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-
-        intent.getParcelableExtra<Product>("product")?.let {
-            product = it
-            setViewData(product = product)
-        } ?: finish()
+        idProduct = intent.getLongExtra(PRODUCT_ID, 0L)
     }
 
     override fun onResume() {
-        //TODO atualizar produto em memoria
         super.onResume()
+        setViewData(idProduct = idProduct)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -47,25 +43,18 @@ class ProductDetailsActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val TAG = "menu"
-        if (!::product.isInitialized) {
-            return true
-        }
         return when (item.itemId) {
             R.id.menu_details_delete -> {
-                ConfirmDialog(this).showDialog(onClickSuccess = {
-                    productDao.delete(product)
-                    Toast.makeText(this, "Produto removido com sucesso", Toast.LENGTH_LONG)
-                        .show()
+                ProdutMenuActions(this).deleteActionButton(product = product, onFinish = {
                     finish()
                 })
                 true
             }
+
             R.id.menu_details_edit -> {
-                Intent(this, FormProductActivity::class.java).apply {
-                    putExtra("product", product)
-                    startActivity(this)
-                }
+                ProdutMenuActions(this).editActionButton(product = product, onFinish = {
+                    startActivity(it)
+                })
                 true
             }
 
@@ -73,10 +62,13 @@ class ProductDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun setViewData(product: Product) {
-        binding.detailsImage.tryLoadImage(product.image, fallbackImageDefault = true)
-        binding.detailsValue.text = product.value.formatBrValue()
-        binding.detailsTitle.text = product.name
-        binding.detailsDescription.text = product.description
+    private fun setViewData(idProduct: Long) {
+        product = productDao.getById(idProduct)
+        product?.let {
+            binding.detailsImage.tryLoadImage(it.image, fallbackImageDefault = true)
+            binding.detailsValue.text = it.value.formatBrValue()
+            binding.detailsTitle.text = it.name
+            binding.detailsDescription.text = it.description
+        } ?: finish()
     }
 }

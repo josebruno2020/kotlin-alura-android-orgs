@@ -1,14 +1,13 @@
 package br.com.alura.aluraorgs.ui.activity
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import br.com.alura.aluraorgs.database.ProductDatabase
 import br.com.alura.aluraorgs.databinding.ActivityFormProductBinding
 import br.com.alura.aluraorgs.extensions.tryLoadImage
 import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.dialog.FormImageDialog
+import br.com.alura.aluraorgs.ui.toast.ToastMessage
 import java.math.BigDecimal
 
 class FormProductActivity : AppCompatActivity() {
@@ -34,15 +33,18 @@ class FormProductActivity : AppCompatActivity() {
         val value = binding.formValueValue
         val button = binding.formButton
 
+        idProduct = intent.getLongExtra(PRODUCT_ID, 0L)
 
-        intent.getParcelableExtra<Product>("product")?.let {
-            idProduct = it.id
-            name.setText(it.name)
-            desc.setText(it.description)
-            value.setText(it.value.toString())
-            imageUrl = it.image
-            binding.imagePreview.tryLoadImage(it.image, fallbackImageDefault = true)
-            title = "Editar Produto"
+        if (idProduct > 0) {
+            val product = productDao.getById(idProduct)
+            product?.let {
+                name.setText(it.name)
+                desc.setText(it.description)
+                value.setText(it.value.toString())
+                imageUrl = it.image
+                binding.imagePreview.tryLoadImage(it.image, fallbackImageDefault = true)
+                title = "Editar Produto"
+            }
         }
 
         setImagePreviewModal()
@@ -53,12 +55,11 @@ class FormProductActivity : AppCompatActivity() {
                 desc = desc.text.toString(),
                 value = value.text.toString()
             )
-            Toast.makeText(this, "Produto adicionado com sucesso!", Toast.LENGTH_LONG).show()
             finish()
         }
     }
 
-    private fun saveProduct(name: String, desc: String, value: String?): Product {
+    private fun saveProduct(name: String, desc: String, value: String?) {
         val bigValue = when {
             value?.isBlank() == true -> {
                 BigDecimal.ZERO
@@ -76,16 +77,12 @@ class FormProductActivity : AppCompatActivity() {
             image = imageUrl
         )
 
-
         if (idProduct > 0) {
-            Log.i("FormProduct", "saveProduct: $product")
-            productDao.update(product)
+            ToastMessage(this).showToastMessage("Produto atualizado com sucesso")
         } else {
-            productDao.insert(product)
+            ToastMessage(this).showToastMessage("Produto inserido com sucesso")
         }
-
-
-        return product
+        productDao.insert(product)
     }
 
     private fun setImagePreviewModal() {
