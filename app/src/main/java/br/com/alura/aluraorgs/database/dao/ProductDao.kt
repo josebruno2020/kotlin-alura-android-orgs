@@ -15,6 +15,18 @@ interface ProductDao {
     @Query("SELECT * FROM PRODUCT where id = :id limit 1")
     fun getById(id: Long): Product?
 
+    @Query("SELECT * FROM Product order by name asc")
+    fun getOrderByNameAsc(): List<Product>
+
+    @Query("SELECT * FROM Product order by name desc")
+    fun getOrderByNameDesc(): List<Product>
+
+    @Query("SELECT * FROM Product order by value asc ")
+    fun getOrderByValueAsc(): List<Product>
+
+    @Query("SELECT * FROM Product order by value desc ")
+    fun getOrderByValueDesc(): List<Product>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg product: Product)
 

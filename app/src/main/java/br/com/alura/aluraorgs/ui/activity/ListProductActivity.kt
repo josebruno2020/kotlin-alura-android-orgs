@@ -2,10 +2,14 @@ package br.com.alura.aluraorgs.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import br.com.alura.aluraorgs.R
 import br.com.alura.aluraorgs.database.ProductDatabase
 import br.com.alura.aluraorgs.databinding.ActivityListProductsBinding
+import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.menu.ProdutMenuActions
 import br.com.alura.aluraorgs.ui.recyclerview.adapter.ListProductAdapter
 
@@ -50,6 +54,26 @@ class ListProductActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         searchProducts()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_list_product, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val productsFiltered: List<Product>? = when(item.itemId) {
+            R.id.menu_name_asc -> productDao.getOrderByNameAsc()
+            R.id.menu_name_desc -> productDao.getOrderByNameDesc()
+            R.id.menu_value_asc -> productDao.getOrderByValueAsc()
+            R.id.menu_value_desc -> productDao.getOrderByValueDesc()
+            else -> null
+        }
+        productsFiltered?.let {
+            adapter.reload(it)
+        }
+
+        return super.onOptionsItemSelected(item)
     }
 
     private fun searchProducts() {

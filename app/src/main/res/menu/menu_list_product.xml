@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_order"
+        android:icon="@drawable/ic_action_menu_filter"
+        app:showAsAction="ifRoom"
+        android:title="Ordenar">
+        <menu>
+            <item
+                android:id="@+id/menu_name_asc"
+                android:title="Nome Asc"/>
+
+            <item
+                android:id="@+id/menu_name_desc"
+                android:title="Nome Desc"/>
+
+
+            <item
+                android:id="@+id/menu_value_asc"
+                android:title="Valor Asc"/>
+
+            <item
+                android:id="@+id/menu_value_desc"
+                android:title="Valor Desc"/>
+        </menu>
+    </item>
+</menu>
