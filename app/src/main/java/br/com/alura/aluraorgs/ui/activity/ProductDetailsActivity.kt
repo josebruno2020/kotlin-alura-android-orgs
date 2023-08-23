@@ -12,6 +12,11 @@ import br.com.alura.aluraorgs.extensions.formatBrValue
 import br.com.alura.aluraorgs.extensions.tryLoadImage
 import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.menu.ProdutMenuActions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ProductDetailsActivity : AppCompatActivity() {
     private val binding by lazy {
@@ -50,25 +55,32 @@ class ProductDetailsActivity : AppCompatActivity() {
                 })
                 true
             }
-
             R.id.menu_details_edit -> {
                 ProdutMenuActions(this).editActionButton(product = product, onFinish = {
                     startActivity(it)
                 })
                 true
             }
-
             else -> super.onOptionsItemSelected(item)
         }
     }
 
     private fun setViewData(idProduct: Long) {
-        product = productDao.getById(idProduct)
-        product?.let {
-            binding.detailsImage.tryLoadImage(it.image, fallbackImageDefault = true)
-            binding.detailsValue.text = it.value.formatBrValue()
-            binding.detailsTitle.text = it.name
-            binding.detailsDescription.text = it.description
-        } ?: finish()
+        val scope = CoroutineScope(IO)
+        scope.launch {
+            product = productDao.getById(idProduct)
+            product?.let {
+                withContext(Main) {
+                    fillData(it)
+                }
+            } ?: finish()
+        }
+    }
+
+    private fun fillData(product: Product) {
+        binding.detailsImage.tryLoadImage(product.image, fallbackImageDefault = true)
+        binding.detailsValue.text = product.value.formatBrValue()
+        binding.detailsTitle.text = product.name
+        binding.detailsDescription.text = product.description
     }
 }

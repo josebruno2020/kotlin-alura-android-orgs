@@ -8,6 +8,10 @@ import br.com.alura.aluraorgs.ui.activity.FormProductActivity
 import br.com.alura.aluraorgs.ui.activity.PRODUCT_ID
 import br.com.alura.aluraorgs.ui.dialog.ConfirmDialog
 import br.com.alura.aluraorgs.ui.toast.ToastMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ProdutMenuActions(
     private val context: Context
@@ -15,6 +19,8 @@ class ProdutMenuActions(
     private val productDao by lazy {
         ProductDatabase.instance(context).productDao()
     }
+
+    private val scope = CoroutineScope(Dispatchers.Main)
 
     fun editActionButton(product: Product?, onFinish: (intent: Intent) -> Unit = {}) {
         Intent(context, FormProductActivity::class.java).apply {
@@ -27,10 +33,14 @@ class ProdutMenuActions(
     fun deleteActionButton(product: Product?, onFinish: () -> Unit = {}) {
         ConfirmDialog(context).showDialog(onClickSuccess = {
             product?.let {
-                productDao.delete(it)
-                ToastMessage(context).showToastMessage("Produto removido com sucesso")
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        productDao.delete(it)
+                    }
+                    ToastMessage(context).showToastMessage("Produto removido com sucesso")
+                    onFinish()
+                }
             }
-            onFinish()
         })
     }
 }

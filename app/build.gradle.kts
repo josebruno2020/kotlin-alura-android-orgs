@@ -53,9 +53,10 @@ dependencies {
     implementation("io.coil-kt:coil:2.4.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01")
 
-
     val roomVersion = "2.4.1"
     implementation("androidx.room:room-runtime:$roomVersion")
 //    annotationProcessor("androidx.room:room-compiler:$roomVersion")
     kapt("androidx.room:room-compiler:$roomVersion")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }

@@ -8,6 +8,11 @@ import br.com.alura.aluraorgs.extensions.tryLoadImage
 import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.dialog.FormImageDialog
 import br.com.alura.aluraorgs.ui.toast.ToastMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 
 class FormProductActivity : AppCompatActivity() {
@@ -19,14 +24,15 @@ class FormProductActivity : AppCompatActivity() {
         ProductDatabase.instance(this).productDao()
     }
 
-    private  var imageUrl: String? = null
+    private var imageUrl: String? = null
     private var idProduct = 0L
+
+    private val scope = CoroutineScope(IO)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         title = "Cadastrar Produto"
-
 
         val name = binding.formTitleValue
         val desc = binding.formDescValue
@@ -36,15 +42,7 @@ class FormProductActivity : AppCompatActivity() {
         idProduct = intent.getLongExtra(PRODUCT_ID, 0L)
 
         if (idProduct > 0) {
-            val product = productDao.getById(idProduct)
-            product?.let {
-                name.setText(it.name)
-                desc.setText(it.description)
-                value.setText(it.value.toString())
-                imageUrl = it.image
-                binding.imagePreview.tryLoadImage(it.image, fallbackImageDefault = true)
-                title = "Editar Produto"
-            }
+            searchProductById()
         }
 
         setImagePreviewModal()
@@ -55,7 +53,6 @@ class FormProductActivity : AppCompatActivity() {
                 desc = desc.text.toString(),
                 value = value.text.toString()
             )
-            finish()
         }
     }
 
@@ -82,15 +79,37 @@ class FormProductActivity : AppCompatActivity() {
         } else {
             ToastMessage(this).showToastMessage("Produto inserido com sucesso")
         }
-        productDao.insert(product)
+        scope.launch {
+            productDao.insert(product)
+            finish()
+        }
     }
 
     private fun setImagePreviewModal() {
         binding.imagePreview.setOnClickListener {
-            FormImageDialog(this).showDialog(imageUrl) {image ->
+            FormImageDialog(this).showDialog(imageUrl) { image ->
                 imageUrl = image
                 binding.imagePreview.tryLoadImage(imageUrl)
             }
         }
+    }
+
+    private fun searchProductById() {
+        scope.launch {
+            productDao.getById(idProduct)?.let {
+                withContext(Dispatchers.Main) {
+                    fillForm(it)
+                }
+            }
+        }
+    }
+
+    private fun fillForm(product: Product) {
+        binding.formTitleValue.setText(product.name)
+        binding.formDescValue.setText(product.description)
+        binding.formValueValue.setText(product.value.toString())
+        imageUrl = product.image
+        binding.imagePreview.tryLoadImage(product.image, fallbackImageDefault = true)
+        title = "Editar Produto"
     }
 }

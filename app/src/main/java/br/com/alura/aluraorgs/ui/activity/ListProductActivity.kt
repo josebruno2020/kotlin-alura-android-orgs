@@ -12,6 +12,10 @@ import br.com.alura.aluraorgs.databinding.ActivityListProductsBinding
 import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.menu.ProdutMenuActions
 import br.com.alura.aluraorgs.ui.recyclerview.adapter.ListProductAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ListProductActivity : AppCompatActivity() {
     private val binding by lazy {
@@ -22,19 +26,21 @@ class ListProductActivity : AppCompatActivity() {
         ProductDatabase.instance(this).productDao()
     }
 
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     private val adapter by lazy {
-        ListProductAdapter(context = this, onClickItemViewListener =  {
+        ListProductAdapter(context = this, onClickItemViewListener = {
             val intent = Intent(this, ProductDetailsActivity::class.java).apply {
                 putExtra(PRODUCT_ID, it.id)
             }
             startActivity(intent)
-        }, onEditClick = {product ->
+        }, onEditClick = { product ->
             ProdutMenuActions(this).editActionButton(product = product, onFinish = {
                 startActivity(it)
             })
         }, onRemoveClick = {
             ProdutMenuActions(this).deleteActionButton(product = it, onFinish = {
-                searchProducts()
+                configureRecyclerView()
             })
         })
     }
@@ -42,18 +48,12 @@ class ListProductActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-
-        val floatingButton = binding.mainAction
-        floatingButton.setOnClickListener {
-            val intent = Intent(this, FormProductActivity::class.java)
-            startActivity(intent)
-        }
-
+        configureFab()
     }
 
     override fun onResume() {
         super.onResume()
-        searchProducts()
+        configureRecyclerView()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -62,29 +62,50 @@ class ListProductActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val productsFiltered: List<Product>? = when(item.itemId) {
-            R.id.menu_name_asc -> productDao.getOrderByNameAsc()
-            R.id.menu_name_desc -> productDao.getOrderByNameDesc()
-            R.id.menu_value_asc -> productDao.getOrderByValueAsc()
-            R.id.menu_value_desc -> productDao.getOrderByValueDesc()
-            else -> null
-        }
-        productsFiltered?.let {
-            adapter.reload(it)
-        }
+        scope.launch {
+            val productsFiltered: List<Product>? = when (item.itemId) {
+                R.id.menu_name_asc -> productDao.getOrderByNameAsc()
+                R.id.menu_name_desc -> productDao.getOrderByNameDesc()
+                R.id.menu_value_asc -> productDao.getOrderByValueAsc()
+                R.id.menu_value_desc -> productDao.getOrderByValueDesc()
+                else -> null
+            }
 
+            withContext(Dispatchers.Main) {
+                productsFiltered?.let {
+                    adapter.reload(it)
+                }
+            }
+        }
         return super.onOptionsItemSelected(item)
     }
 
-    private fun searchProducts() {
+    private fun configureRecyclerView() {
         val list = binding.list
-        adapter.reload(productDao.searchAll())
+        searchProducts()
         list.adapter = adapter
         list.layoutManager = LinearLayoutManager(this)
 
         binding.swipeListRefresh.setOnRefreshListener {
-            adapter.reload(productDao.searchAll())
+            searchProducts()
             binding.swipeListRefresh.isRefreshing = false
+        }
+    }
+
+    private fun searchProducts() {
+        scope.launch {
+            val products = productDao.searchAll()
+            withContext(Dispatchers.Main) {
+                adapter.reload(products = products)
+            }
+        }
+    }
+
+    private fun configureFab() {
+        val floatingButton = binding.mainAction
+        floatingButton.setOnClickListener {
+            val intent = Intent(this, FormProductActivity::class.java)
+            startActivity(intent)
         }
     }
 }
