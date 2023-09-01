@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import br.com.alura.aluraorgs.R
 import br.com.alura.aluraorgs.database.ProductDatabase
 import br.com.alura.aluraorgs.databinding.ActivityProductDetailsBinding
@@ -12,9 +13,7 @@ import br.com.alura.aluraorgs.extensions.formatBrValue
 import br.com.alura.aluraorgs.extensions.tryLoadImage
 import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.menu.ProdutMenuActions
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -34,10 +33,7 @@ class ProductDetailsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         idProduct = intent.getLongExtra(PRODUCT_ID, 0L)
-    }
 
-    override fun onResume() {
-        super.onResume()
         setViewData(idProduct = idProduct)
     }
 
@@ -66,14 +62,15 @@ class ProductDetailsActivity : AppCompatActivity() {
     }
 
     private fun setViewData(idProduct: Long) {
-        val scope = CoroutineScope(IO)
-        scope.launch {
-            product = productDao.getById(idProduct)
-            product?.let {
-                withContext(Main) {
-                    fillData(it)
-                }
-            } ?: finish()
+        lifecycleScope.launch {
+            productDao.getById(idProduct).collect { p ->
+                product = p
+                product?.let {
+                    withContext(Dispatchers.Main) {
+                        fillData(it)
+                    }
+                } ?: finish()
+            }
         }
     }
 

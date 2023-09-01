@@ -15,7 +15,7 @@ abstract class ProductDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
 
     companion object {
-        private lateinit var db: ProductDatabase
+        @Volatile private lateinit var db: ProductDatabase
         fun instance(context: Context): ProductDatabase {
             if (::db.isInitialized) return db
             return Room.databaseBuilder(

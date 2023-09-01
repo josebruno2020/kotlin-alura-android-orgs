@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import br.com.alura.aluraorgs.R
 import br.com.alura.aluraorgs.database.ProductDatabase
@@ -12,8 +13,8 @@ import br.com.alura.aluraorgs.databinding.ActivityListProductsBinding
 import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.menu.ProdutMenuActions
 import br.com.alura.aluraorgs.ui.recyclerview.adapter.ListProductAdapter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,8 +26,6 @@ class ListProductActivity : AppCompatActivity() {
     private val productDao by lazy {
         ProductDatabase.instance(this).productDao()
     }
-
-    private val scope = CoroutineScope(Dispatchers.IO)
 
     private val adapter by lazy {
         ListProductAdapter(context = this, onClickItemViewListener = {
@@ -48,12 +47,8 @@ class ListProductActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        configureFab()
-    }
-
-    override fun onResume() {
-        super.onResume()
         configureRecyclerView()
+        configureFab()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -62,12 +57,12 @@ class ListProductActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        scope.launch {
+        lifecycleScope.launch {
             val productsFiltered: List<Product>? = when (item.itemId) {
-                R.id.menu_name_asc -> productDao.getOrderByNameAsc()
-                R.id.menu_name_desc -> productDao.getOrderByNameDesc()
-                R.id.menu_value_asc -> productDao.getOrderByValueAsc()
-                R.id.menu_value_desc -> productDao.getOrderByValueDesc()
+                R.id.menu_name_asc -> productDao.getOrderByNameAsc().firstOrNull()
+                R.id.menu_name_desc -> productDao.getOrderByNameDesc().firstOrNull()
+                R.id.menu_value_asc -> productDao.getOrderByValueAsc().firstOrNull()
+                R.id.menu_value_desc -> productDao.getOrderByValueDesc().firstOrNull()
                 else -> null
             }
 
@@ -93,13 +88,20 @@ class ListProductActivity : AppCompatActivity() {
     }
 
     private fun searchProducts() {
-        scope.launch {
-            val products = productDao.searchAll()
-            withContext(Dispatchers.Main) {
-                adapter.reload(products = products)
+        val job = lifecycleScope.launch {
+            productDao.searchAll().collect {
+                adapter.reload(it)
             }
         }
+
+//        job.cancel()
     }
+
+    private suspend fun searchAllProducts() =
+        withContext(Dispatchers.IO) {
+            productDao.searchAll()
+        }
+
 
     private fun configureFab() {
         val floatingButton = binding.mainAction

@@ -2,17 +2,15 @@ package br.com.alura.aluraorgs.ui.activity
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import br.com.alura.aluraorgs.database.ProductDatabase
 import br.com.alura.aluraorgs.databinding.ActivityFormProductBinding
 import br.com.alura.aluraorgs.extensions.tryLoadImage
 import br.com.alura.aluraorgs.model.Product
 import br.com.alura.aluraorgs.ui.dialog.FormImageDialog
 import br.com.alura.aluraorgs.ui.toast.ToastMessage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 
 class FormProductActivity : AppCompatActivity() {
@@ -26,8 +24,6 @@ class FormProductActivity : AppCompatActivity() {
 
     private var imageUrl: String? = null
     private var idProduct = 0L
-
-    private val scope = CoroutineScope(IO)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,7 +75,7 @@ class FormProductActivity : AppCompatActivity() {
         } else {
             ToastMessage(this).showToastMessage("Produto inserido com sucesso")
         }
-        scope.launch {
+        lifecycleScope.launch {
             productDao.insert(product)
             finish()
         }
@@ -95,11 +91,9 @@ class FormProductActivity : AppCompatActivity() {
     }
 
     private fun searchProductById() {
-        scope.launch {
-            productDao.getById(idProduct)?.let {
-                withContext(Dispatchers.Main) {
-                    fillForm(it)
-                }
+        lifecycleScope.launch {
+            productDao.getById(idProduct).firstOrNull()?.let {
+                fillForm(it)
             }
         }
     }
