@@ -46,13 +46,13 @@ class ProductDetailsActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_details_delete -> {
-                ProdutMenuActions(this).deleteActionButton(product = product, onFinish = {
+                ProdutMenuActions(this, lifecycleScope).deleteActionButton(product = product, onFinish = {
                     finish()
                 })
                 true
             }
             R.id.menu_details_edit -> {
-                ProdutMenuActions(this).editActionButton(product = product, onFinish = {
+                ProdutMenuActions(this, lifecycleScope).editActionButton(product = product, onFinish = {
                     startActivity(it)
                 })
                 true

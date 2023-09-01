@@ -34,11 +34,11 @@ class ListProductActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }, onEditClick = { product ->
-            ProdutMenuActions(this).editActionButton(product = product, onFinish = {
+            ProdutMenuActions(this, lifecycleScope).editActionButton(product = product, onFinish = {
                 startActivity(it)
             })
         }, onRemoveClick = {
-            ProdutMenuActions(this).deleteActionButton(product = it, onFinish = {
+            ProdutMenuActions(this, lifecycleScope).deleteActionButton(product = it, onFinish = {
                 configureRecyclerView()
             })
         })
